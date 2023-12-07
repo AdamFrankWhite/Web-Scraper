@@ -1,13 +1,12 @@
 const puppeteer = require("puppeteer");
-
+var fs = require("fs");
 async function scrapeLinks() {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    const linksArray = [];
     // results array
     const results = [];
-    // Navigate to a website
-    for (let i = 0; i < 2; i++) {
+    // Navigate to website and loop through pagination
+    for (let i = 0; i < 20; i++) {
         await page.goto("https://www.rspb.org.uk/days-out/reserves?page=" + i);
 
         // Use page.evaluate to fetch links and return them
@@ -22,38 +21,32 @@ async function scrapeLinks() {
             return linksArray;
         }, "/days-out/reserves/");
 
-        // Concatenate pageLinks with linksArray
-        //linksArray.push(...pageLinks);
-
         // Loop through the links
         for (const link of pageLinks) {
             console.log(link);
-            // You can perform any actions with each link here
 
-            // Open a new page for each link
+            // Open a new page for each nature reserve link
             const newPage = await browser.newPage();
 
             // Navigate to the link
             await newPage.goto(link);
 
-            // Perform actions with child nodes on the new page
+            // fetch data from new page
             const childNodes = await newPage.evaluate(() => {
-                // grab the adjacent text content of the address pictogram
-
-                // Note: This part is commented out for now as it may not work directly
-                // You can adjust this part based on your actual HTML structure
+                // grab the reserve name and address info
+                const reserveName =
+                    document.getElementsByTagName("h1")[0].textContent;
                 const addressPictogram =
                     document.getElementsByClassName("contact")[2].textContent;
-                // return addressPictogram;
-                // const contactNode = addressPictogram.parentNode;
+                //tidy address data
                 const addressString = addressPictogram.split(", ");
-                const reserveName = addressString[0];
-                const postcode = addressString.slice(-1)[0];
-                return reserveName + ": " + postcode;
+                const postcode = addressString.slice(-1)[0].trimEnd();
+                // return reserve name and postcode
+                return reserveName + ", " + postcode;
             });
 
-            // Push the results to the array
-            results.push(childNodes);
+            // Push the array to the results along with link
+            results.push(childNodes + ", " + link);
 
             // Close the new page
             await newPage.close();
@@ -61,6 +54,15 @@ async function scrapeLinks() {
     }
 
     console.log(results);
+    // write output to json file
+    fs.writeFile(
+        "nature-reserves.json",
+        JSON.stringify(results),
+        function (err) {
+            if (err) throw err;
+            console.log("data written to json file");
+        }
+    );
     // Close the browser
     await browser.close();
 }
