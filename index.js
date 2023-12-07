@@ -3,55 +3,61 @@ const puppeteer = require("puppeteer");
 async function scrapeLinks() {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-
-    // Navigate to a website
-
-    await page.goto("https://www.rspb.org.uk/days-out/reserves");
-
-    const links = await page.evaluate((query) => {
-        const anchorElements = document.querySelectorAll(`a[href*="${query}"]`);
-        const linksArray = [];
-        anchorElements.forEach((anchor) => {
-            linksArray.push(anchor.href);
-        });
-        return linksArray;
-    }, "/days-out/reserves/");
-
+    const linksArray = [];
     // results array
     const results = [];
-    // Loop through the links
-    for (const link of links) {
-        console.log(link);
-        // You can perform any actions with each link here
+    // Navigate to a website
+    for (let i = 0; i < 2; i++) {
+        await page.goto("https://www.rspb.org.uk/days-out/reserves?page=" + i);
 
-        // Open a new page for each link
-        const newPage = await browser.newPage();
+        // Use page.evaluate to fetch links and return them
+        const pageLinks = await page.evaluate((query) => {
+            const anchorElements = document.querySelectorAll(
+                `a[href*="${query}"]`
+            );
+            const linksArray = [];
+            anchorElements.forEach((anchor) => {
+                linksArray.push(anchor.href);
+            });
+            return linksArray;
+        }, "/days-out/reserves/");
 
-        // Navigate to the link
-        await newPage.goto(link);
+        // Concatenate pageLinks with linksArray
+        //linksArray.push(...pageLinks);
 
-        // Perform actions with child nodes on the new page
-        const childNodes = await newPage.evaluate(() => {
-            // grab the adjacent text content of the address pictogram
+        // Loop through the links
+        for (const link of pageLinks) {
+            console.log(link);
+            // You can perform any actions with each link here
 
-            // Note: This part is commented out for now as it may not work directly
-            // You can adjust this part based on your actual HTML structure
-            const addressPictogram = document.querySelector(
-                ".contact .ng-star-inserted"
-            ).textContent;
-            return addressPictogram;
-            // const contactNode = addressPictogram.parentNode;
-            // const addressString = addressPictogram.split(", ");
-            // const reserveName = addressString[0];
-            // const postcode = addressString.slice(-1)[0];
-            // return reserveName + ": " + postcode;
-        });
+            // Open a new page for each link
+            const newPage = await browser.newPage();
 
-        // Push the results to the array
-        results.push(childNodes);
+            // Navigate to the link
+            await newPage.goto(link);
 
-        // Close the new page
-        await newPage.close();
+            // Perform actions with child nodes on the new page
+            const childNodes = await newPage.evaluate(() => {
+                // grab the adjacent text content of the address pictogram
+
+                // Note: This part is commented out for now as it may not work directly
+                // You can adjust this part based on your actual HTML structure
+                const addressPictogram =
+                    document.getElementsByClassName("contact")[2].textContent;
+                // return addressPictogram;
+                // const contactNode = addressPictogram.parentNode;
+                const addressString = addressPictogram.split(", ");
+                const reserveName = addressString[0];
+                const postcode = addressString.slice(-1)[0];
+                return reserveName + ": " + postcode;
+            });
+
+            // Push the results to the array
+            results.push(childNodes);
+
+            // Close the new page
+            await newPage.close();
+        }
     }
 
     console.log(results);
