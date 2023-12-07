@@ -37,7 +37,8 @@ async function scrapeLinks() {
                 const reserveName =
                     document.getElementsByTagName("h1")[0].textContent;
                 const addressPictogram =
-                    document.getElementsByClassName("contact")[2].textContent;
+                    document.querySelector("[name=address]").parentNode
+                        .textContent;
                 //tidy address data
                 const addressString = addressPictogram.split(", ");
                 const postcode = addressString.slice(-1)[0].trimEnd();
