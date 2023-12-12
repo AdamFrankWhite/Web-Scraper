@@ -1,5 +1,7 @@
-const data = require("./natureReserves.json");
-const latLngs = require("./latLngs.json");
+// const data = require("./nature-reserves.json");
+const data = require("./wildlife-trust-reserves.json");
+// const latLngs = require("./latLngs-rspb.json");
+const latLngs = require("./latLngs-wildlife-trust.json");
 const fs = require("fs");
 let reserves = data;
 
@@ -16,7 +18,8 @@ latLngs.forEach((item) => {
 
 // write updated reserve data with lat/lng to file
 fs.writeFile(
-    "nature-reserves-v2.json",
+    // "nature-reserves-v2.json",
+    "wildlife-trust-reserves-with-lat-lng.json",
     JSON.stringify(reserves),
     function (err) {
         if (err) throw err;
